@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+
+<html ng-app="app">
+
+    <head>
+        <meta charset="utf-8" />
+        <title>Reference Table Administration</title>
+    </head>
+
+    <body>
+
+	    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular.min.js"></script>
+	    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular-route.min.js"></script>
+	    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular-resource.min.js"></script>
+
+        <section>
+
+			<ng-view></ng-view>
+
+			<script type="text/ng-template" id="/refs.html">
+
+				<h1>Table : Refs </h1>
+
+				  <h3><u>List :</u></h3>
+					  Search: <input type="text" ng-model="search.cle">
+					  <ul>
+						<li ng-repeat="ref in refs | filter: search">
+						  <div><button ng-click="select($index)">Select</button><b> {{ref.cle}}</b></div>
+						</li>
+					  </ul>
+					<br>
+
+				  <h3><u>Detail :</u></h3>
+					  <table>
+						<tr>
+						 <td>Id :</td><td>{{ref.id}}</td>
+						</tr>
+						<tr>
+						 <td>Cle :</td><td><input type="text" ng-model="ref.cle"></td>
+						</tr>
+						<tr>
+						<tr>
+						 <td>Valeur :</td><td><input type="text" ng-model="ref.valeur"></td>
+						</tr>
+						 <td></td><td>
+										<button ng-model="ref" ng-click="clear()">Clear</button>
+										<button ng-model="ref" ng-click="save()">Create</button>
+										<button ng-click="update(ref.id)">Update</button>
+										<button ng-click="delete(ref.id)">Delete</button></td>
+						</tr>
+					  </table>
+
+			</script>
+
+			<script>
+
+
+			  	angular.module('app', ['ngRoute', 'ngResource'])
+
+				// SERVICES
+
+				.factory('Refs', ['$resource', function($resource){
+				  return $resource('rest/refs/:id', null, {
+					  'update': { method:'PUT' }
+				  });
+				}])
+
+				// CONTROLLERS
+
+        		.controller('RefsController', ['$scope', '$routeParams', 'Refs', '$location', function ($scope, $routeParams, Refs, $location) {
+
+				  $scope.refs = Refs.query();
+				  $scope.select = function(index) {
+					  								$scope.index = index;
+					  								$scope.ref = $scope.refs[index];
+				  }
+				  $scope.save = function(){
+					  						var nouvelleRef = new Refs({ cle: $scope.ref.cle, valeur: $scope.ref.valeur });
+            								nouvelleRef.$save(function(){
+              																$scope.refs = Refs.query();
+              																$scope.clear()
+            								});
+				  }
+
+				  $scope.update = function(id){
+					Refs.update({id: $scope.ref.id}, $scope.ref);
+					$scope.refs.splice(id, 1);
+              		$scope.clear()
+				  }
+
+				  $scope.delete = function(id){
+						Refs.remove({id: $scope.ref.id}, function(){
+							$scope.refs.splice($scope.index, 1);
+							$scope.clear()
+						});
+				  }
+
+				  $scope.clear = function() {
+									$scope.ref = undefined;
+									$scope.index = undefined;
+			  	  }
+
+				}])
+
+				// ROUTES ANGULAR
+
+				.config(['$routeProvider', function ($routeProvider) {
+
+				  $routeProvider
+
+					.when('/', {
+					  templateUrl: '/refs.html',
+					  controller: 'RefsController'
+					})
+
+				}]);
+
+			</script>
+
+        </section>
+
+    </body>
+</html>
